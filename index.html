@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#FFE600">
+<title>X1/9 Julekalender</title>
+<style>
+  :root{
+    --gul:#FFE600;
+    --gul-d:#F5C518;
+    --gul-dd:#B89200;
+    --tekst:#1d1d1f;
+    --bg:#FBF9F3;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;min-height:100vh;display:flex;flex-direction:column;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--tekst);
+    background:var(--bg) radial-gradient(circle,rgba(0,0,0,.045) 2px,transparent 2.5px) 0 0/28px 28px;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  body.stop-scroll{overflow:hidden}
+  .side{width:100%;max-width:1040px;margin:0 auto;padding:28px 16px 24px;flex:1}
+
+  /* ---------- Overskrift ---------- */
+  header.top{text-align:center;margin-bottom:22px}
+  .bil{display:block;width:clamp(100px,24vw,150px);height:auto;margin:0 auto 8px;color:var(--gul)}
+  h1{margin:0;font-size:clamp(1.9rem,6.5vw,3.3rem);line-height:1.15;font-weight:900;letter-spacing:-.02em}
+  .logo{
+    display:inline-block;background:var(--gul);padding:0 .28em .04em;border-radius:.16em;
+    box-shadow:0 .09em 0 var(--gul-dd);margin-right:.1em;
+  }
+  .undertekst{margin:.8rem 0 0;color:#555;font-size:clamp(.95rem,2.7vw,1.15rem)}
+  .status{
+    display:inline-block;margin:18px auto 0;padding:.55rem 1.1rem;background:#fff;
+    border:2px solid var(--gul);border-radius:999px;box-shadow:0 3px 0 var(--gul-d);
+    font-size:clamp(.9rem,2.6vw,1.05rem);max-width:100%;
+  }
+  .vejledning{margin:12px 0 0;font-size:.85rem;color:#777}
+  .testbanner{
+    display:inline-block;margin:0 0 14px;padding:.35rem .9rem;border-radius:999px;
+    background:#1d1d1f;color:var(--gul);font-size:.8rem;font-weight:700;letter-spacing:.02em;
+  }
+
+  /* ---------- Grid ---------- */
+  .gitter{
+    list-style:none;margin:0;padding:14px 0 6px;
+    display:grid;grid-template-columns:repeat(6,1fr);gap:28px 20px;
+  }
+  @media (max-width:820px){ .gitter{grid-template-columns:repeat(4,1fr);gap:26px 16px} }
+  @media (max-width:400px){ .gitter{grid-template-columns:repeat(3,1fr);gap:24px 12px} }
+
+  /* ---------- Låger (LEGO-klodser) ---------- */
+  .lage{
+    position:relative;display:block;width:100%;aspect-ratio:1/1;padding:0;border:0;background:none;
+    font:inherit;color:#fff;cursor:pointer;perspective:700px;-webkit-tap-highlight-color:transparent;
+  }
+  .lage.aabner{z-index:5}
+  .nipler{
+    position:absolute;left:0;right:0;top:-10px;height:12px;display:flex;justify-content:space-around;
+    padding:0 13%;pointer-events:none;
+  }
+  .nipler i{
+    width:27%;height:100%;background:var(--c);border-radius:7px 7px 0 0;
+    box-shadow:inset 0 3px 0 rgba(255,255,255,.3),inset 0 -2px 0 rgba(0,0,0,.15);
+  }
+  .front,.indre{position:absolute;top:0;right:0;bottom:0;left:0;border-radius:8px}
+
+  .indre{
+    background:#FFFDF0;color:var(--tekst);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    box-shadow:inset 0 0 0 4px var(--gul);
+  }
+  .lage.aaben .indre{box-shadow:inset 0 0 0 4px var(--gul),0 6px 0 var(--gul-dd)}
+  .mini{width:62%;height:auto;color:var(--gul)}
+  .indre b{font-size:clamp(.8rem,2.4vw,1rem);font-weight:800}
+
+  .front{
+    background:var(--c);transform-origin:left center;
+    transition:transform .8s cubic-bezier(.35,.05,.25,1);
+    backface-visibility:hidden;-webkit-backface-visibility:hidden;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 6px 0 rgba(0,0,0,.28),inset 0 2px 0 rgba(255,255,255,.28);
+  }
+  .nr{font-size:clamp(1.5rem,5vw,2.3rem);font-weight:900;text-shadow:0 2px 0 rgba(0,0,0,.25)}
+  .lage.aaben .front{transform:rotateY(-118deg)}
+  .gitter.init .front{transition:none}
+
+  .laas{display:none;position:absolute;right:9%;bottom:9%;width:22%;height:auto;color:rgba(255,255,255,.9)}
+  .idag-tag{
+    display:none;position:absolute;top:7%;left:50%;transform:translateX(-50%);
+    background:var(--gul);color:var(--tekst);font-size:clamp(.5rem,1.6vw,.65rem);font-weight:900;
+    letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:999px;white-space:nowrap;
+  }
+
+  /* Låst */
+  .lage.laast{cursor:not-allowed}
+  .lage.laast .front{
+    background-image:linear-gradient(rgba(255,255,255,.42),rgba(255,255,255,.42));
+    filter:grayscale(.55);
+  }
+  .lage.laast .nipler i{filter:grayscale(.55);opacity:.7}
+  .lage.laast .laas{display:block}
+  .lage.ryst{animation:ryst .4s}
+  @keyframes ryst{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+
+  /* Dagens låge */
+  .lage.i-dag:not(.aaben) .front{animation:puls 1.8s ease-in-out infinite}
+  .lage.i-dag:not(.aaben) .idag-tag{display:block}
+  .lage.i-dag:not(.aaben) .nr{margin-top:12%}
+  @keyframes puls{
+    0%,100%{box-shadow:0 6px 0 rgba(0,0,0,.28),0 0 0 4px var(--gul),0 0 0 4px rgba(255,230,0,.7)}
+    50%{box-shadow:0 6px 0 rgba(0,0,0,.28),0 0 0 4px var(--gul),0 0 0 15px rgba(255,230,0,0)}
+  }
+  .lage:focus-visible{outline:none}
+  .lage:focus-visible .front,.lage:focus-visible .indre{outline:3px solid var(--tekst);outline-offset:4px}
+
+  /* ---------- Færdig model ---------- */
+  .model{margin-top:44px;text-align:center}
+  .model h2{margin:0 0 6px;font-size:clamp(1.4rem,4vw,2rem)}
+  .model p{margin:0 0 18px;color:#555}
+  .model-galleri{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+  .model-galleri a{display:block;border-radius:12px;overflow:hidden;border:4px solid var(--gul);background:#fff;box-shadow:0 5px 0 var(--gul-dd)}
+  .model-galleri img{display:block;width:100%;height:auto}
+  .model-tom{display:none;background:#fff;border:2px dashed var(--gul-d);border-radius:12px;padding:16px;color:#555}
+
+  /* ---------- Lightbox ---------- */
+  .lysbox{
+    position:fixed;top:0;right:0;bottom:0;left:0;z-index:100;display:flex;align-items:center;justify-content:center;
+    padding:12px;background:rgba(20,20,20,.74);opacity:0;visibility:hidden;transition:opacity .25s,visibility .25s;
+  }
+  .lysbox.vis{opacity:1;visibility:visible}
+  .lb-kort{
+    display:flex;flex-direction:column;width:100%;max-width:1100px;
+    max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);
+    background:#fff;border-radius:14px;border-top:8px solid var(--gul);overflow:hidden;
+    transform:scale(.96);transition:transform .25s;box-shadow:0 20px 60px rgba(0,0,0,.4);
+  }
+  .lysbox.vis .lb-kort{transform:scale(1)}
+  .lb-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px 10px 20px;border-bottom:1px solid #eee}
+  .lb-top h2{margin:0;font-size:clamp(1.25rem,3.6vw,1.8rem);font-weight:900}
+  .lb-luk{
+    width:46px;height:46px;border:0;border-radius:50%;background:var(--gul);color:var(--tekst);
+    font-size:1.9rem;line-height:1;cursor:pointer;font-weight:700;flex:none;
+  }
+  .lb-luk:hover{background:var(--gul-d)}
+  .lb-krop{flex:1;min-height:0;overflow:auto;padding:12px;text-align:center;-webkit-overflow-scrolling:touch}
+  .lb-krop img{display:none;max-width:100%;height:auto;border-radius:6px}
+  .lb-henter{padding:40px 10px;color:#777}
+  .lb-fejl{display:none;margin:20px auto;max-width:520px;padding:18px;border:2px dashed var(--gul-d);border-radius:12px;background:#FFFDF0;line-height:1.5}
+  .lb-fejl code{display:inline-block;margin-top:6px;padding:2px 8px;background:#fff;border:1px solid #ddd;border-radius:6px;font-size:.95em;word-break:break-all}
+  .lb-bund{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-top:1px solid #eee;font-size:.9rem}
+  .lb-bund button,.lb-bund a{
+    font:inherit;font-weight:700;color:var(--tekst);background:#f3f0e4;border:0;border-radius:999px;
+    padding:.55rem 1rem;cursor:pointer;text-decoration:none;white-space:nowrap;
+  }
+  .lb-bund button:hover:not(:disabled),.lb-bund a:hover{background:var(--gul)}
+  .lb-bund button:disabled{opacity:.35;cursor:default}
+  .lb-bund a[hidden]{display:none}
+  @media (max-width:480px){ .lb-bund a{display:none} }
+
+  /* ---------- Sidefod ---------- */
+  footer{text-align:center;padding:22px 16px 30px;color:#666;font-size:.9rem}
+  footer a{color:#666}
+  .nulstil{display:none;margin-top:8px}
+  .test .nulstil{display:block}
+
+  @media (prefers-reduced-motion:reduce){
+    .front,.lysbox,.lb-kort{transition:none}
+    .lage.i-dag:not(.aaben) .front{animation:none;box-shadow:0 6px 0 rgba(0,0,0,.28),0 0 0 4px var(--gul),0 0 0 9px rgba(255,230,0,.5)}
+    .lage.ryst{animation:none}
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="bil" viewBox="0 0 120 48">
+    <path d="M3 37 L4 30 Q4 28 7 27 L40 15 Q44 13.5 48 13.5 L70 13.5 Q74 13.5 77 15.5 L90 24 L110 27.5 Q116 28.5 117 33 L117 37 Z"
+          fill="currentColor" stroke="#1d1d1f" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M45 17 L69 17 L80 25 L36 25 Z" fill="#fff" fill-opacity=".85" stroke="#1d1d1f" stroke-width="1.6" stroke-linejoin="round"/>
+    <circle cx="30" cy="37" r="9" fill="#1d1d1f"/><circle cx="30" cy="37" r="3.8" fill="#ddd"/>
+    <circle cx="92" cy="37" r="9" fill="#1d1d1f"/><circle cx="92" cy="37" r="3.8" fill="#ddd"/>
+  </symbol>
+  <symbol id="laas" viewBox="0 0 24 24">
+    <path d="M8 10V7.5a4 4 0 0 1 8 0V10" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+    <rect x="4.5" y="10" width="15" height="11" rx="2" fill="currentColor"/>
+  </symbol>
+</svg>
+
+<main class="side">
+  <header class="top">
+    <svg class="bil" viewBox="0 0 120 48" aria-hidden="true"><use href="#bil"/></svg>
+    <h1><span class="logo">X1/9</span>Julekalender</h1>
+    <p class="undertekst">Fiat X1/9 i Vibrant Yellow · En dag, ét byggestep</p>
+    <div id="testbanner" class="testbanner" style="display:none"></div><br>
+    <p id="status" class="status" aria-live="polite"></p>
+    <p class="vejledning">Tryk på en oplåst låge for at åbne den. Åbnede låger kan altid ses igen.</p>
+  </header>
+
+  <ol id="gitter" class="gitter init" aria-label="De 24 låger"></ol>
+
+  <section id="model" class="model" hidden>
+    <h2>Den færdige model</h2>
+    <p>Alle 24 byggesteps er klar. Her er den færdige Fiat X1/9 i Vibrant Yellow.</p>
+    <div id="modelGalleri" class="model-galleri"></div>
+    <div id="modelTom" class="model-tom">
+      Billederne af den færdige model er ikke lagt op endnu. Siden leder efter
+      <code>files/images/model-01.jpg</code> (eller .png) og op til model-06.
+    </div>
+  </section>
+</main>
+
+<footer id="sidefod">
+  God jul fra X1/9-julekalenderen · 24 dage · 24 byggesteps
+  <div class="nulstil"><a href="#" id="nulstil">Nulstil</a></div>
+</footer>
+
+<!-- Lightbox -->
+<div id="lysbox" class="lysbox" role="dialog" aria-modal="true" aria-labelledby="lbTitel" aria-hidden="true">
+  <div class="lb-kort" id="lbKort">
+    <div class="lb-top">
+      <h2 id="lbTitel">Dag 1 af 24</h2>
+      <button type="button" class="lb-luk" id="lbLuk" aria-label="Luk">&times;</button>
+    </div>
+    <div class="lb-krop" id="lbKrop">
+      <div class="lb-henter" id="lbHenter">Henter billedet …</div>
+      <img id="lbBillede" alt="">
+      <div class="lb-fejl" id="lbFejl"></div>
+    </div>
+    <div class="lb-bund">
+      <button type="button" id="lbForrige">&lsaquo; Forrige</button>
+      <a id="lbFuld" href="#" target="_blank" rel="noopener" hidden>Åbn i fuld størrelse</a>
+      <button type="button" id="lbNaeste">Næste &rsaquo;</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ===== Indstillinger ===== */
+  var AAR = 2026;                 // kalenderens år
+  var ANTAL = 24;
+  var BILLEDSTI = 'files/images/dag-';
+  var MODELSTI = 'files/images/model-';
+  var ENDELSER = ['png', 'jpg', 'jpeg', 'webp'];
+  var NOEGLE = 'x19-julekalender-' + AAR;
+  var MAANEDER = ['januar','februar','marts','april','maj','juni','juli','august','september','oktober','november','december'];
+  var FARVER = ['#C91A09','#0055BF','#237841','#5A5D63','#E8710A','#0A8A99','#7B3F98'];
+
+  /* ===== Test-tilstand =====
+     ?test=1 eller ?test=alle : alle låger oplåst
+     ?test=N (2-24)           : simulér dag N
+     ?test=dag1               : simulér kun dag 1
+     ?test=0                  : før 1. december
+     ?test=25 (eller højere)  : efter jul                        */
+  var params = new URLSearchParams(window.location.search);
+  var testTilstand = params.has('test');
+  var testVaerdi = (params.get('test') || '').trim().toLowerCase();
+  var simDag = null, alleTest = false;
+  if (testTilstand) {
+    var m = /^dag\s*(\d+)$/.exec(testVaerdi);
+    if (m) { simDag = +m[1]; }
+    else if (/^\d+$/.test(testVaerdi)) {
+      var v = +testVaerdi;
+      if (v === 1) { alleTest = true; } else { simDag = v; }
+    } else { alleTest = true; }
+  }
+
+  /* ===== Element-referencer ===== */
+  var elGitter = document.getElementById('gitter');
+  var elStatus = document.getElementById('status');
+  var elBanner = document.getElementById('testbanner');
+  var elModel = document.getElementById('model');
+  var elModelGalleri = document.getElementById('modelGalleri');
+  var elModelTom = document.getElementById('modelTom');
+  var elLysbox = document.getElementById('lysbox');
+  var elKort = document.getElementById('lbKort');
+  var elTitel = document.getElementById('lbTitel');
+  var elLuk = document.getElementById('lbLuk');
+  var elKrop = document.getElementById('lbKrop');
+  var elHenter = document.getElementById('lbHenter');
+  var elBillede = document.getElementById('lbBillede');
+  var elFejl = document.getElementById('lbFejl');
+  var elForrige = document.getElementById('lbForrige');
+  var elNaeste = document.getElementById('lbNaeste');
+  var elFuld = document.getElementById('lbFuld');
+
+  var rolig = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ===== Gemte låger ===== */
+  var aabnede = {};   // { nr: true }
+
+  function indlaes() {
+    if (testTilstand) { return {}; }
+    try {
+      var raa = window.localStorage.getItem(NOEGLE);
+      var liste = raa ? JSON.parse(raa) : [];
+      var ud = {};
+      if (Array.isArray(liste)) {
+        liste.forEach(function (n) { if (n >= 1 && n <= ANTAL && n % 1 === 0) { ud[n] = true; } });
+      }
+      return ud;
+    } catch (e) { return {}; }
+  }
+  function gem() {
+    if (testTilstand) { return; }
+    try {
+      var liste = Object.keys(aabnede).map(Number).sort(function (a, b) { return a - b; });
+      window.localStorage.setItem(NOEGLE, JSON.stringify(liste));
+    } catch (e) { /* privat tilstand eller fuld lagerplads: ignorér */ }
+  }
+
+  /* ===== Datoberegning (browserens lokale tid) ===== */
+  function nu() {
+    if (simDag === null) { return new Date(); }
+    if (simDag === 0) { return new Date(AAR, 10, 20); }
+    return new Date(AAR, 11, Math.min(simDag, 26));
+  }
+  function beregn() {
+    var d = nu();
+    var y = d.getFullYear(), mo = d.getMonth(), dd = d.getDate();
+    var r = { dato: dd + '. ' + MAANEDER[mo], fase: '', oplaast: 0, idag: null, dageTil: 0 };
+    if (alleTest) { r.fase = 'alle'; r.oplaast = ANTAL; return r; }
+    if (y < AAR || (y === AAR && mo < 11)) {
+      r.fase = 'foer';
+      r.dageTil = Math.round((Date.UTC(AAR, 11, 1) - Date.UTC(y, mo, dd)) / 86400000);
+    } else if (y === AAR && mo === 11 && dd <= 24) {
+      r.fase = 'jul'; r.oplaast = dd; r.idag = dd;
+    } else {
+      r.fase = 'efter'; r.oplaast = ANTAL;
+    }
+    return r;
+  }
+
+  var info = beregn();
+  var knapper = {};   // nr -> button
+
+  /* ===== Byg gitteret ===== */
+  for (var nr = 1; nr <= ANTAL; nr++) {
+    (function (nr) {
+      var li = document.createElement('li');
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'lage';
+      b.style.setProperty('--c', FARVER[((nr - 1) * 3) % 7]);
+      b.innerHTML =
+        '<span class="nipler"><i></i><i></i></span>' +
+        '<span class="indre"><svg class="mini" viewBox="0 0 120 48" aria-hidden="true"><use href="#bil"/></svg><b>' + nr + '</b></span>' +
+        '<span class="front"><span class="idag-tag">I dag</span><span class="nr">' + nr + '</span>' +
+        '<svg class="laas" viewBox="0 0 24 24" aria-hidden="true"><use href="#laas"/></svg></span>';
+      b.addEventListener('click', function () { haandterKlik(nr, b); });
+      li.appendChild(b);
+      elGitter.appendChild(li);
+      knapper[nr] = b;
+    })(nr);
+  }
+
+  function tilstand(nr) {
+    if (aabnede[nr]) { return 'aaben'; }
+    return nr <= info.oplaast ? 'klar' : 'laast';
+  }
+
+  /* ===== Render ===== */
+  function render() {
+    for (var nr = 1; nr <= ANTAL; nr++) {
+      var b = knapper[nr];
+      var s = tilstand(nr);
+      b.classList.toggle('laast', s === 'laast');
+      b.classList.toggle('aaben', s === 'aaben');
+      b.classList.toggle('i-dag', nr === info.idag);
+      b.setAttribute('aria-disabled', s === 'laast' ? 'true' : 'false');
+      if (s === 'laast') {
+        b.setAttribute('aria-label', 'Låge ' + nr + ', låst. Kan åbnes ' + nr + '. december');
+        b.title = 'Åbner ' + nr + '. december';
+      } else if (s === 'aaben') {
+        b.setAttribute('aria-label', 'Låge ' + nr + ', åbnet. Tryk for at se billedet igen');
+        b.title = 'Se dagens byggestep igen';
+      } else {
+        b.setAttribute('aria-label', 'Låge ' + nr + (nr === info.idag ? ', dagens låge, klar til at åbne' : ', klar til at åbne'));
+        b.title = 'Åbn låge ' + nr;
+      }
+    }
+    opdaterStatus();
+    opdaterBanner();
+    if (info.fase === 'efter') { indlaesModel(); }
+  }
+
+  function opdaterStatus() {
+    var t = '';
+    if (info.fase === 'foer') {
+      t = info.dageTil === 1
+        ? 'Alle låger er låst. I morgen, 1. december, kan den første låge åbnes.'
+        : 'Alle låger er låst. Der er ' + info.dageTil + ' dage til 1. december, hvor den første låge kan åbnes.';
+    } else if (info.fase === 'jul') {
+      var n = info.idag;
+      t = 'I dag, ' + info.dato + ', er låge ' + n + (aabnede[n] ? ' åbnet.' : ' klar til at åbne.');
+      if (aabnede[n] && n < ANTAL) { t += ' I morgen venter låge ' + (n + 1) + '.'; }
+      if (aabnede[n] && n === ANTAL) { t += ' Det var den sidste låge. God jul!'; }
+      var mangler = 0;
+      for (var i = 1; i < n; i++) { if (!aabnede[i]) { mangler++; } }
+      if (mangler > 0) { t += ' Du har ' + mangler + (mangler === 1 ? ' tidligere låge' : ' tidligere låger') + ' til gode.'; }
+    } else if (info.fase === 'efter') {
+      t = 'Julekalenderen er slut, og alle 24 låger er låst op. God jul!';
+    } else if (info.fase === 'alle') {
+      t = 'Alle 24 låger er låst op.';
+    }
+    elStatus.textContent = t;
+  }
+
+  function opdaterBanner() {
+    if (!testTilstand) { return; }
+    var besk = alleTest ? 'alle låger oplåst' : (simDag === 0 ? 'før 1. december' : (simDag >= 25 ? 'efter jul' : 'dag ' + simDag));
+    elBanner.textContent = 'Testtilstand (' + besk + ') · intet gemmes i browseren';
+    elBanner.style.display = 'inline-block';
+    document.body.classList.add('test');
+  }
+
+  /* ===== Åbn låge ===== */
+  function haandterKlik(nr, knap) {
+    var s = tilstand(nr);
+    if (s === 'laast') {
+      knap.classList.remove('ryst');
+      void knap.offsetWidth;
+      knap.classList.add('ryst');
+      setTimeout(function () { knap.classList.remove('ryst'); }, 450);
+      return;
+    }
+    if (s === 'aaben') { visLysbox(nr, knap); return; }
+    if (knap.dataset.arbejder) { return; }
+    knap.dataset.arbejder = '1';
+    knap.classList.add('aabner', 'aaben');
+    aabnede[nr] = true;
+    gem();
+    opdaterStatus();
+    knap.setAttribute('aria-label', 'Låge ' + nr + ', åbnet. Tryk for at se billedet igen');
+    setTimeout(function () {
+      knap.classList.remove('aabner');
+      delete knap.dataset.arbejder;
+      visLysbox(nr, knap);
+    }, rolig ? 30 : 800);
+  }
+
+  /* ===== Billedindlæsning (prøver flere filendelser) ===== */
+  function proev(base, endelser) {
+    return new Promise(function (resolve) {
+      var i = 0;
+      (function naeste() {
+        if (i >= endelser.length) { resolve(null); return; }
+        var url = base + '.' + endelser[i++];
+        var im = new Image();
+        im.onload = function () { resolve(url); };
+        im.onerror = naeste;
+        im.src = url;
+      })();
+    });
+  }
+  function nn(n) { return (n < 10 ? '0' : '') + n; }
+
+  /* ===== Lightbox ===== */
+  var lbNr = null, lbTrigger = null, lbToken = 0;
+
+  function aabnedeListe() {
+    var l = [];
+    for (var n = 1; n <= ANTAL; n++) { if (aabnede[n]) { l.push(n); } }
+    return l;
+  }
+  function opdaterNav() {
+    var l = aabnedeListe();
+    var i = l.indexOf(lbNr);
+    elForrige.disabled = !(i > 0);
+    elNaeste.disabled = !(i >= 0 && i < l.length - 1);
+  }
+
+  function visLysbox(nr, trigger) {
+    lbNr = nr;
+    if (trigger) { lbTrigger = trigger; }
+    var token = ++lbToken;
+    elTitel.textContent = 'Dag ' + nr + ' af ' + ANTAL;
+    elBillede.style.display = 'none';
+    elBillede.removeAttribute('src');
+    elFejl.style.display = 'none';
+    elFuld.hidden = true;
+    elHenter.style.display = 'block';
+    elKrop.scrollTop = 0;
+    opdaterNav();
+
+    elLysbox.classList.add('vis');
+    elLysbox.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('stop-scroll');
+    elLuk.focus();
+
+    var filnavn = BILLEDSTI + nn(nr) + '.png';
+    proev(BILLEDSTI + nn(nr), ENDELSER).then(function (url) {
+      if (token !== lbToken) { return; }
+      elHenter.style.display = 'none';
+      if (url) {
+        elBillede.alt = 'Byggestep for dag ' + nr;
+        elBillede.src = url;
+        elBillede.style.display = 'inline-block';
+        elFuld.href = url;
+        elFuld.hidden = false;
+      } else {
+        elFejl.innerHTML = 'Hov, dagens byggebillede er ikke lagt op endnu.<br>Siden leder efter filen:<br><code></code>' +
+          '<br><small>(Siden prøver også .jpg, .jpeg og .webp)</small>';
+        elFejl.querySelector('code').textContent = filnavn;
+        elFejl.style.display = 'block';
+      }
+    });
+  }
+
+  function lukLysbox() {
+    if (!elLysbox.classList.contains('vis')) { return; }
+    lbToken++;
+    elLysbox.classList.remove('vis');
+    elLysbox.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('stop-scroll');
+    var tilbage = lbTrigger || (lbNr && knapper[lbNr]);
+    if (tilbage) { tilbage.focus(); }
+  }
+
+  function naviger(retning) {
+    var l = aabnedeListe();
+    var i = l.indexOf(lbNr) + retning;
+    if (i >= 0 && i < l.length) { visLysbox(l[i], knapper[l[i]]); }
+  }
+
+  elLuk.addEventListener('click', lukLysbox);
+  elLysbox.addEventListener('click', function (e) { if (e.target === elLysbox) { lukLysbox(); } });
+  elForrige.addEventListener('click', function () { naviger(-1); });
+  elNaeste.addEventListener('click', function () { naviger(1); });
+
+  document.addEventListener('keydown', function (e) {
+    if (!elLysbox.classList.contains('vis')) { return; }
+    if (e.key === 'Escape' || e.key === 'Esc') { e.preventDefault(); lukLysbox(); return; }
+    if (e.key === 'ArrowLeft') { naviger(-1); return; }
+    if (e.key === 'ArrowRight') { naviger(1); return; }
+    if (e.key === 'Tab') {
+      var f = elKort.querySelectorAll('button:not([disabled]), a[href]:not([hidden])');
+      if (!f.length) { return; }
+      var foerste = f[0], sidste = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === foerste) { e.preventDefault(); sidste.focus(); }
+      else if (!e.shiftKey && document.activeElement === sidste) { e.preventDefault(); foerste.focus(); }
+    }
+  });
+
+  /* ===== Færdig model (efter jul) ===== */
+  var modelIndlaest = false;
+  function indlaesModel() {
+    if (modelIndlaest) { return; }
+    modelIndlaest = true;
+    elModel.hidden = false;
+    var lofter = [];
+    for (var i = 1; i <= 6; i++) { lofter.push(proev(MODELSTI + nn(i), ['jpg', 'png', 'jpeg', 'webp'])); }
+    Promise.all(lofter).then(function (urls) {
+      var fundet = 0;
+      urls.forEach(function (url, idx) {
+        if (!url) { return; }
+        fundet++;
+        var a = document.createElement('a');
+        a.href = url; a.target = '_blank'; a.rel = 'noopener';
+        var im = document.createElement('img');
+        im.src = url; im.alt = 'Den færdige Fiat X1/9, billede ' + (idx + 1);
+        a.appendChild(im);
+        elModelGalleri.appendChild(a);
+      });
+      if (!fundet) { elModelTom.style.display = 'block'; }
+    });
+  }
+
+  /* ===== Nulstil (kun i test-tilstand) ===== */
+  document.getElementById('nulstil').addEventListener('click', function (e) {
+    e.preventDefault();
+    if (!window.confirm('Nulstil testen? Dette sletter også gemt fremdrift i denne browser.')) { return; }
+    try { window.localStorage.removeItem(NOEGLE); } catch (err) { /* ignorér */ }
+    aabnede = {};
+    lukLysbox();
+    render();
+  });
+
+  /* ===== Start ===== */
+  aabnede = indlaes();
+  render();
+  window.requestAnimationFrame(function () {
+    window.requestAnimationFrame(function () { elGitter.classList.remove('init'); });
+  });
+
+  /* Opdatér ved midnat / når fanen vises igen (åbner aldrig låger af sig selv) */
+  function noegleNu() { var r = beregn(); return r.fase + ':' + r.oplaast + ':' + r.dageTil; }
+  var sidsteNoegle = noegleNu();
+  function tjekDato() {
+    var k = noegleNu();
+    if (k !== sidsteNoegle) { sidsteNoegle = k; info = beregn(); render(); }
+  }
+  setInterval(tjekDato, 30000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) { tjekDato(); } });
+})();
+</script>
+</body>
+</html>
