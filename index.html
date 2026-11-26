@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#FFE600">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Julekalender">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>Brians Julekalender</title>
 <style>
   :root{
@@ -217,6 +224,22 @@
   .sne{display:none}
   .lyskaede i,.lage.jul24 .krone,.lage.jul24 .front{animation:none}
 }
+  /* ---------- Mobil (iPhone 17: 402 px) ---------- */
+  @media (max-width:520px){ .gitter{grid-template-columns:repeat(3,1fr);gap:32px 14px} }
+  .nr{font-size:clamp(1.7rem,7vw,2.3rem)}
+  .lysbox{padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}
+  .lb-kort{max-height:100%}
+  .lb-bund{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:10px 12px}
+  #lbForrige{grid-column:1;justify-self:start}
+  #lbFuld{grid-column:2}
+  #lbNaeste{grid-column:3;justify-self:end}
+  .lb-bund button,.lb-bund a{padding:.55rem .9rem}
+  .lydlinje{margin-top:6px}
+
+    .lage,.lb-bund button,.lb-luk{touch-action:manipulation}
+  .lage,.idag-tag{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  .ios-tip{margin:14px auto 0;max-width:34em;padding:.6rem .9rem;background:#fff;border:2px dashed var(--gul-d);border-radius:12px;font-size:.85rem;color:#555;line-height:1.45}
+  .ios-tip a{color:#555;font-weight:700}
 </style>
 </head>
 <body>
@@ -249,14 +272,15 @@
     <h1><span class="logo">Brians</span>Julekalender</h1>
     <div id="testbanner" class="testbanner" style="display:none"></div><br>
     <p id="status" class="status" aria-live="polite"></p>
-    <p class="vejledning">Tryk på en oplåst låge for at åbne den. Åbnede låger kan altid ses igen.</p>
+    <p class="vejledning">Tryk på en oplåst låge for at åbne den. Åbnede låger kan altid ses igen</p>
+        <p id="iosTip" class="ios-tip" hidden>Tip: Tryk på <b>Del</b>-ikonet i Safari og vælg <b>Føj til hjemmeskærm</b>, så åbner kalenderen som en app. <a href="#" id="iosTipLuk">Skjul</a></p>
   </header>
 
   <ol id="gitter" class="gitter init" aria-label="De 24 låger"></ol>
 
   <section id="model" class="model" hidden>
     <h2>Den færdige model</h2>
-    <p>Alle 24 byggesteps er klar. Her er den færdige Fiat X1/9 i Vibrant Yellow.</p>
+    <p>Du har klaret alle 24 byggesteps! Her er din færdige Fiat X1/9 i Neogul</p>
     <div id="modelGalleri" class="model-galleri"></div>
     <div id="modelTom" class="model-tom">
       Billederne af den færdige model er ikke lagt op endnu. Siden leder efter
@@ -267,6 +291,7 @@
 
 <footer id="sidefod">
   God jul fra LEGO-julekalenderen · 24 dage · 24 byggesteps
+    <div class="lydlinje"><a href="#" id="lydknap">Lyd: til</a></div>
   <div class="nulstil"><a href="#" id="nulstil">Nulstil</a></div>
 </footer>
 
@@ -284,7 +309,7 @@
     </div>
     <div class="lb-bund">
       <button type="button" id="lbForrige">&lsaquo; Forrige</button>
-      <a id="lbFuld" href="#" target="_blank" rel="noopener" hidden>Åbn i fuld størrelse</a>
+            <a id="lbFuld" href="#" target="_blank" rel="noopener" title="Åbn billedet i fuld størrelse i en ny fane" hidden>Fuld størrelse</a>
       <button type="button" id="lbNaeste">Næste &rsaquo;</button>
     </div>
   </div>
@@ -444,7 +469,7 @@
       alleTest || dTil < 0 ? 'Juleaften' : dTil === 0 ? 'I dag' : dTil === 1 ? 'I morgen' : 'Om ' + dTil + ' dage';
     opdaterStatus();
     opdaterBanner();
-    if (info.fase === 'efter') { indlaesModel(); }
+    if (info.fase === 'efter' || aabnede[ANTAL]) { indlaesModel(); }
   }
 
   function opdaterStatus() {
@@ -478,10 +503,75 @@
     document.body.classList.add('test');
   }
 
+  /* ===== Lyd (laves i browseren, ingen filer) ===== */
+    var lydTil = true, ac = null;
+  try { if (!testTilstand && window.localStorage.getItem('julekalender-lyd') === 'fra') { lydTil = false; } } catch (e) { /* ignorér */ }
+  var elLyd = document.getElementById('lydknap');
+  function visLydTekst() { elLyd.textContent = 'Lyd: ' + (lydTil ? 'til' : 'fra'); }
+  visLydTekst();
+  function hentAc() {
+    if (!lydTil) { return null; }
+    try {
+      if (!ac) { var AC = window.AudioContext || window.webkitAudioContext; if (!AC) { return null; } ac = new AC(); }
+      if (ac.state !== 'running') { ac.resume(); }
+      return ac;
+    } catch (e) { return null; }
+  }
+  function tone(c, hz, start, dur, vol) {
+    [[hz, 'sine', vol], [hz * 2, 'triangle', vol * 0.3]].forEach(function (p) {
+      var o = c.createOscillator(), g = c.createGain();
+      o.type = p[1]; o.frequency.value = p[0];
+      g.gain.setValueAtTime(0.0001, start);
+      g.gain.exponentialRampToValueAtTime(p[2], start + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+      o.connect(g); g.connect(c.destination);
+      o.start(start); o.stop(start + dur + 0.05);
+    });
+  }
+  function aabneLyd(nr) {
+    var c = hentAc(); if (!c) { return; }
+    try {
+      var t = c.currentTime + 0.02;
+      var o = c.createOscillator(), f = c.createBiquadFilter(), g = c.createGain();
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(120, t); o.frequency.linearRampToValueAtTime(230, t + 0.45);
+      f.type = 'bandpass'; f.frequency.value = 700; f.Q.value = 3;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.09, t + 0.06);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+      o.connect(f); f.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 0.55);
+      var toner = nr === ANTAL ? [523.25, 659.25, 783.99, 1046.5, 1318.5] : [659.25, 783.99, 1046.5];
+      toner.forEach(function (hz, i) { tone(c, hz, t + 0.4 + i * 0.1, nr === ANTAL ? 1.6 : 0.9, 0.13); });
+    } catch (e) { /* lyd er pynt: ignorér fejl */ }
+  }
+  function afvisLyd() {
+    var c = hentAc(); if (!c) { return; }
+    try {
+      var t = c.currentTime + 0.01;
+      [[200, 0], [150, 0.14]].forEach(function (p) {
+        var s = t + p[1], o = c.createOscillator(), f = c.createBiquadFilter(), g = c.createGain();
+        o.type = 'square';
+        o.frequency.setValueAtTime(p[0], s); o.frequency.linearRampToValueAtTime(p[0] * 0.9, s + 0.12);
+        f.type = 'lowpass'; f.frequency.value = 900;
+        g.gain.setValueAtTime(0.0001, s);
+        g.gain.exponentialRampToValueAtTime(0.06, s + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, s + 0.13);
+        o.connect(f); f.connect(g); g.connect(c.destination); o.start(s); o.stop(s + 0.15);
+      });
+    } catch (e) { /* ignorér */ }
+  }
+  elLyd.addEventListener('click', function (e) {
+    e.preventDefault();
+    lydTil = !lydTil; visLydTekst();
+    try { if (!testTilstand) { window.localStorage.setItem('julekalender-lyd', lydTil ? 'til' : 'fra'); } } catch (err) { /* ignorér */ }
+    if (lydTil) { aabneLyd(1); }
+  });
+
   /* ===== Åbn låge ===== */
   function haandterKlik(nr, knap) {
     var s = tilstand(nr);
     if (s === 'laast') {
+      afvisLyd();
       knap.classList.remove('ryst');
       void knap.offsetWidth;
       knap.classList.add('ryst');
@@ -492,8 +582,10 @@
     if (knap.dataset.arbejder) { return; }
     knap.dataset.arbejder = '1';
     knap.classList.add('aabner', 'aaben');
+    aabneLyd(nr);
     aabnede[nr] = true;
     gem();
+    if (nr === ANTAL) { indlaesModel(); }
     opdaterStatus();
     knap.setAttribute('aria-label', 'Låge ' + nr + ', åbnet. Tryk for at se billedet igen');
     setTimeout(function () {
@@ -520,7 +612,8 @@
   function nn(n) { return (n < 10 ? '0' : '') + n; }
 
   /* ===== Lightbox ===== */
-  var lbNr = null, lbTrigger = null, lbToken = 0;
+    var lbNr = null, lbIdx = 0, lbModus = 'dag', lbTrigger = null, lbToken = 0;
+  var modelUrls = [], modelAnkre = [];
 
   function aabnedeListe() {
     var l = [];
@@ -528,18 +621,18 @@
     return l;
   }
   function opdaterNav() {
-    var l = aabnedeListe();
-    var i = l.indexOf(lbNr);
+    var i, n, foerste, sidste;
+    if (lbModus === 'model') { i = lbIdx; n = modelUrls.length; foerste = i === 0; sidste = i === n - 1; }
+    else { var l = aabnedeListe(); i = l.indexOf(lbNr); n = l.length; foerste = lbNr === 1; sidste = lbNr === ANTAL; }
     elForrige.disabled = !(i > 0);
-    elNaeste.disabled = !(i >= 0 && i < l.length - 1);
+    elNaeste.disabled = !(i >= 0 && i < n - 1);
+    elForrige.style.visibility = foerste ? 'hidden' : 'visible';
+    elNaeste.style.visibility = sidste ? 'hidden' : 'visible';
   }
-
-  function visLysbox(nr, trigger) {
-    lbNr = nr;
+  function aabnVindue(titel, trigger) {
     if (trigger) { lbTrigger = trigger; }
-    var token = ++lbToken;
-    elTitel.textContent = 'Dag ' + nr + ' af ' + ANTAL;
-    elKort.classList.toggle('jul', nr === ANTAL);
+    elTitel.textContent = titel;
+    elBillede.onload = null;
     elBillede.style.display = 'none';
     elBillede.removeAttribute('src');
     elBillede.classList.remove('zoom');
@@ -547,13 +640,17 @@
     elFuld.hidden = true;
     elHenter.style.display = 'block';
     elKrop.scrollTop = 0;
-    opdaterNav();
-
     elLysbox.classList.add('vis');
     elLysbox.setAttribute('aria-hidden', 'false');
     document.body.classList.add('stop-scroll');
     elLuk.focus();
-
+  }
+  function visLysbox(nr, trigger) {
+    var token = ++lbToken;
+    lbModus = 'dag'; lbNr = nr;
+    aabnVindue('Dag ' + nr + ' af ' + ANTAL, trigger);
+    elKort.classList.toggle('jul', nr === ANTAL);
+    opdaterNav();
     var filnavn = BILLEDSTI + nn(nr) + '.png';
     proev(BILLEDSTI + nn(nr), ENDELSER).then(function (url) {
       if (token !== lbToken) { return; }
@@ -572,7 +669,22 @@
       }
     });
   }
-
+  function visModel(i, trigger) {
+    var token = ++lbToken;
+    lbModus = 'model'; lbIdx = i;
+    aabnVindue((i + 1) + ' af ' + modelUrls.length, modelAnkre[i] || trigger);
+    elKort.classList.add('jul');
+    opdaterNav();
+    elBillede.alt = 'Den færdige Fiat X1/9, billede ' + (i + 1);
+    elBillede.onload = function () {
+      if (token !== lbToken) { return; }
+      elHenter.style.display = 'none';
+      elBillede.style.display = 'inline-block';
+    };
+    elBillede.src = modelUrls[i];
+    elFuld.href = modelUrls[i];
+    elFuld.hidden = false;
+  }
   function lukLysbox() {
     if (!elLysbox.classList.contains('vis')) { return; }
     lbToken++;
@@ -581,9 +693,16 @@
     document.body.classList.remove('stop-scroll');
     var tilbage = lbTrigger || (lbNr && knapper[lbNr]);
     if (tilbage) { tilbage.focus(); }
+    if (lbModus === 'dag' && lbNr === ANTAL && !elModel.hidden) {
+      elModel.scrollIntoView({ behavior: rolig ? 'auto' : 'smooth', block: 'start' });
+    }
   }
-
   function naviger(retning) {
+    if (lbModus === 'model') {
+      var j = lbIdx + retning;
+      if (j >= 0 && j < modelUrls.length) { visModel(j); }
+      return;
+    }
     var l = aabnedeListe();
     var i = l.indexOf(lbNr) + retning;
     if (i >= 0 && i < l.length) { visLysbox(l[i], knapper[l[i]]); }
@@ -623,7 +742,7 @@ elKrop.addEventListener('touchend', function (e) {
 }, { passive: true });
 
   /* ===== Færdig model (efter jul) ===== */
-  var modelIndlaest = false;
+    var modelIndlaest = false;
   function indlaesModel() {
     if (modelIndlaest) { return; }
     modelIndlaest = true;
@@ -631,18 +750,20 @@ elKrop.addEventListener('touchend', function (e) {
     var lofter = [];
     for (var i = 1; i <= 6; i++) { lofter.push(proev(MODELSTI + nn(i), ['jpg', 'png', 'jpeg', 'webp'])); }
     Promise.all(lofter).then(function (urls) {
-      var fundet = 0;
-      urls.forEach(function (url, idx) {
+      urls.forEach(function (url) {
         if (!url) { return; }
-        fundet++;
+        var idx = modelUrls.length;
+        modelUrls.push(url);
         var a = document.createElement('a');
-        a.href = url; a.target = '_blank'; a.rel = 'noopener';
+        a.href = url; a.title = 'Se billedet stort'; a.setAttribute('role', 'button');
+        a.addEventListener('click', function (e) { e.preventDefault(); visModel(idx); });
         var im = document.createElement('img');
         im.src = url; im.alt = 'Den færdige Fiat X1/9, billede ' + (idx + 1);
         a.appendChild(im);
         elModelGalleri.appendChild(a);
+        modelAnkre.push(a);
       });
-      if (!fundet) { elModelTom.style.display = 'block'; }
+      if (!modelUrls.length) { elModelTom.style.display = 'block'; }
     });
   }
 
@@ -659,7 +780,7 @@ elKrop.addEventListener('touchend', function (e) {
 (function () {
   var f = ['#E53935','#FFD600','#43A047','#1E88E5'], h = '', i;
   for (i = 0; i < 18; i++) {
-    h += '<i style="--p:' + f[i % 4] + ';animation-delay:-' + ((i * 0.37) % 2.4).toFixed(2) + 's"></i>';
+        h += '<i style="--p:' + f[(i + (i >> 1)) % 4] + ';animation-delay:-' + ((i * 0.37) % 2.4).toFixed(2) + 's"></i>';
   }
   document.getElementById('lyskaede').innerHTML = h;
   h = '';
@@ -671,6 +792,19 @@ elKrop.addEventListener('touchend', function (e) {
   document.getElementById('sne').innerHTML = h;
 })();
 
+    /* ===== iPhone-tip: Føj til hjemmeskærm ===== */
+  (function () {
+    var ios = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    var app = window.navigator.standalone === true || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+    var tip = document.getElementById('iosTip'), skjult = false;
+    try { skjult = !testTilstand && window.localStorage.getItem('julekalender-tip') === 'skjult'; } catch (e) { /* ignorér */ }
+    if (ios && !app && !skjult) { tip.hidden = false; }
+    document.getElementById('iosTipLuk').addEventListener('click', function (e) {
+      e.preventDefault(); tip.hidden = true;
+      try { if (!testTilstand) { window.localStorage.setItem('julekalender-tip', 'skjult'); } } catch (err) { /* ignorér */ }
+    });
+  })();
+  
   /* ===== Start ===== */
   aabnede = indlaes();
   render();
