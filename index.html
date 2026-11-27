@@ -274,6 +274,21 @@
     .hjerter{display:none}
     .lucia-lag::after,.lage.luciadag .flamme{animation:none}
   }
+    /* ---------- Mærker (21. og 23.), solhverv-tekst og adventskrans ---------- */
+  .lage.maerke:not(.aaben) .idag-tag{display:block}
+  .lage.maerke:not(.aaben) .nr{margin-top:12%}
+  .lage.lille .idag-tag{font-size:clamp(.44rem,1.35vw,.55rem);letter-spacing:.02em;padding:2px 6px}
+  .lb-hilsen.sol{background:linear-gradient(135deg,#FFF3C4,#FFE0A3);border-color:#F0B23C;color:#7A4A00;font-size:clamp(1rem,4.2vw,1.25rem)}
+  .advent{position:relative;display:flex;justify-content:center;align-items:flex-end;gap:16px;width:max-content;max-width:100%;margin:10px auto 0;padding:24px 20px 9px}
+  .advent::after{content:"";position:absolute;left:0;right:0;bottom:0;height:12px;background:#1C5B34;border:2px solid #1d1d1f;border-radius:999px}
+  .lys{position:relative;z-index:1;width:14px;height:24px;background:#C62828;border:2px solid #1d1d1f;border-radius:4px 4px 2px 2px}
+  .lys::before{content:"";position:absolute;left:50%;top:-7px;width:2px;height:6px;margin-left:-1px;background:#1d1d1f}
+  .lys .fl{display:none;position:absolute;left:50%;bottom:calc(100% + 3px);width:15px;height:19px;margin-left:-7.5px;transform-origin:50% 100%;filter:drop-shadow(0 0 5px rgba(255,170,0,.85));animation:flimmer 1.6s ease-in-out infinite}
+  .lys.taendt .fl{display:block}
+  .lys:nth-child(2) .fl{animation-delay:-.4s}
+  .lys:nth-child(3) .fl{animation-delay:-.9s}
+  .lys:nth-child(4) .fl{animation-delay:-1.2s}
+  @media (prefers-reduced-motion:reduce){ .lys .fl{animation:none} }
 </style>
 </head>
 <body>
@@ -308,6 +323,7 @@
   <circle cx="50" cy="60" r="2.6" fill="#1E88E5"/><circle cx="38" cy="44" r="2.4" fill="#FFE600"/>
 </svg>
     <h1><span class="logo">Brians</span>Julekalender</h1>
+    <div id="advent" class="advent" role="img" aria-label="Adventskrans"></div>
     <div id="testbanner" class="testbanner" style="display:none"></div><br>
     <p id="status" class="status" aria-live="polite"></p>
     <p class="vejledning">Tryk på en oplåst låge for at åbne den. Åbnede låger kan altid ses igen</p>
@@ -462,7 +478,7 @@
       var li = document.createElement('li');
       var b = document.createElement('button');
       b.type = 'button';
-      b.className = nr === ANTAL ? 'lage jul24' : nr === 13 ? 'lage luciadag' : 'lage';
+            b.className = nr === ANTAL ? 'lage jul24' : nr === 13 ? 'lage luciadag' : nr === 21 ? 'lage maerke' : nr === 23 ? 'lage maerke lille' : 'lage';
       b.style.setProperty('--c', FARVER[((nr - 1) * 3) % 7]);
       var maerke = nr === 12
         ? '<span class="hjertebadge"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#hjerte"/></svg><em>32 år</em></span>'
@@ -472,7 +488,7 @@
         '<svg class="krone" viewBox="0 0 24 24" aria-hidden="true"><use href="#stjerne"/></svg>' +
         '<svg class="flamme" viewBox="0 0 24 30" aria-hidden="true"><use href="#flamme"/></svg>' +
         '<span class="indre">' + maerke + '<b>' + nr + '</b></span>' +
-        '<span class="front"><span class="idag-tag">' + (nr === ANTAL ? 'Juleaften' : nr === 13 ? 'Luciadag' : 'I dag') + '</span><span class="nr">' + nr + '</span>' +
+        '<span class="front"><span class="idag-tag">' + (nr === ANTAL ? 'Juleaften' : nr === 13 ? 'Luciadag' : nr === 21 ? 'Solhverv' : nr === 23 ? 'Lillejuleaften' : 'I dag') + '</span><span class="nr">' + nr + '</span>' +
         '<svg class="laas" viewBox="0 0 24 24" aria-hidden="true"><use href="#laas"/></svg></span>';
       b.addEventListener('click', function () { haandterKlik(nr, b); });
       li.appendChild(b);
@@ -515,15 +531,19 @@
     if (info.fase === 'efter' || aabnede[ANTAL]) { indlaesModel(); }
   }
 
-  function opdaterStatus() {
+    function opdaterStatus() {
+    opdaterAdvent();
     var t = '';
     if (info.fase === 'foer') {
       t = info.dageTil === 1
         ? 'Alle låger er låst. I morgen, 1. december, kan den første låge åbnes.'
         : 'Alle låger er låst. Der er ' + info.dageTil + ' dage til 1. december, hvor den første låge kan åbnes.';
+      var d0 = nu();
+      if (d0.getMonth() === 10 && d0.getDate() === 29) { t = 'I dag er det 1. søndag i advent. ' + t; }
     } else if (info.fase === 'jul') {
       var n = info.idag;
       t = 'I dag, ' + info.dato + ', er låge ' + n + (aabnede[n] ? ' åbnet.' : ' klar til at åbne.');
+      if (SAERLIGE[n]) { t += ' ' + SAERLIGE[n]; }
       if (aabnede[n] && n < ANTAL) { t += ' I morgen venter låge ' + (n + 1) + '.'; }
       if (aabnede[n] && n === ANTAL) { t += ' Det var den sidste låge. God jul!'; }
       if (n === ANTAL && !aabnede[n]) { t += ' Det er juleaften!'; }
@@ -654,6 +674,32 @@
     if (nr === 13) { luciaAften(); }
   }
 
+    /* ===== Adventskrans og særlige dage i statuslinjen ===== */
+  var SAERLIGE = {
+    6: 'I dag er det 2. søndag i advent.',
+    12: 'I dag er det 32 år siden, I blev forlovet!',
+    13: 'I dag er det Luciadag og 3. søndag i advent.',
+    20: 'I dag er det 4. søndag i advent.',
+    21: 'I dag er det vintersolhverv – årets korteste dag.',
+    23: 'I dag er det Lillejuleaften.'
+  };
+  HILSNER[21] = 'Årets korteste dag. Fra i dag bliver dagene lysere igen.';
+  var ADVENT = [new Date(AAR, 10, 29), new Date(AAR, 11, 6), new Date(AAR, 11, 13), new Date(AAR, 11, 20)];
+  var elAdvent = document.getElementById('advent');
+  (function () {
+    var h = '';
+    for (var q = 0; q < 4; q++) { h += '<span class="lys"><svg class="fl" viewBox="0 0 24 30" aria-hidden="true"><use href="#flamme"/></svg></span>'; }
+    elAdvent.innerHTML = h;
+  })();
+  function opdaterAdvent() {
+    var d = nu(), dag = new Date(d.getFullYear(), d.getMonth(), d.getDate()), n = 0;
+    ADVENT.forEach(function (a) { if (dag >= a) { n++; } });
+    if (alleTest) { n = 4; }
+    var lys = elAdvent.children;
+    for (var k = 0; k < lys.length; k++) { lys[k].classList.toggle('taendt', k < n); }
+    elAdvent.setAttribute('aria-label', 'Adventskrans: ' + n + ' lys tændt');
+  }
+
   /* ===== Åbn låge ===== */
   function haandterKlik(nr, knap) {
     var s = tilstand(nr);
@@ -739,6 +785,7 @@
     aabnVindue('Dag ' + nr + ' af ' + ANTAL, trigger);
     elHilsen.textContent = HILSNER[nr] || '';
     elHilsen.hidden = !HILSNER[nr];
+    elHilsen.className = 'lb-hilsen' + (nr === 21 ? ' sol' : '');
     elKort.classList.toggle('jul', nr === ANTAL);
     opdaterNav();
     var filnavn = BILLEDSTI + nn(nr) + '.png';
