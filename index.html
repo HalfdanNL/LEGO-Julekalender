@@ -240,15 +240,53 @@
   .lage,.idag-tag{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
   .ios-tip{margin:14px auto 0;max-width:34em;padding:.6rem .9rem;background:#fff;border:2px dashed var(--gul-d);border-radius:12px;font-size:.85rem;color:#555;line-height:1.45}
   .ios-tip a{color:#555;font-weight:700}
+    /* ---------- Låge 12 (forlovelsen) ---------- */
+  .hjertebadge{position:relative;display:block;width:64%;aspect-ratio:1/1;color:#E53935;--hs:#1d1d1f}
+  .hjertebadge svg{display:block;width:100%;height:100%}
+  .hjertebadge em{position:absolute;top:0;right:0;bottom:0;left:0;display:flex;align-items:center;justify-content:center;padding-bottom:6%;font-style:normal;font-weight:900;font-size:clamp(.62rem,2.9vw,.95rem);line-height:1;color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.35);white-space:nowrap}
+  .lb-hilsen{margin:2px 0 14px;padding:12px 14px;border-radius:12px;background:linear-gradient(135deg,#FFEEF1,#FFF6E8);border:2px solid #F29BAE;color:#B0123C;font-weight:900;font-size:clamp(1.1rem,4.8vw,1.5rem);line-height:1.25}
+  .hjerter{position:fixed;top:0;right:0;bottom:0;left:0;z-index:130;pointer-events:none;overflow:hidden}
+  .hjerter svg{position:absolute;bottom:-40px;left:var(--x);width:var(--s);height:var(--s);color:var(--h);opacity:0;animation:stig var(--t) ease-in var(--d) forwards}
+  @keyframes stig{0%{opacity:0;transform:translate3d(0,0,0) scale(.6)}12%{opacity:.95}85%{opacity:.9}100%{opacity:0;transform:translate3d(var(--w),-115vh,0) scale(1.1)}}
+
+  /* ---------- Låge 13 (Luciadag) ---------- */
+  .flamme{display:none}
+  .lage.luciadag .nipler{display:none}
+  .lage.luciadag .flamme{display:block;position:absolute;left:0;right:0;bottom:calc(100% - 3px);z-index:2;width:clamp(18px,14%,24px);height:auto;margin:0 auto;transform-origin:50% 100%;filter:drop-shadow(0 0 6px rgba(255,170,0,.85));pointer-events:none;animation:flimmer 1.6s ease-in-out infinite}
+  @keyframes flimmer{0%,100%{transform:scale(1,1) rotate(-2deg)}20%{transform:scale(.93,1.07) rotate(2.5deg)}40%{transform:scale(1.05,.96) rotate(-1.5deg)}60%{transform:scale(.95,1.06) rotate(3deg)}80%{transform:scale(1.03,.98) rotate(-3deg)}}
+  .lage.luciadag .idag-tag{top:13%}
+  .lage.luciadag:not(.aaben) .idag-tag{display:block}
+  .lage.luciadag:not(.aaben) .nr{margin-top:12%}
+
+  /* aftenstemning, når låge 13 åbnes */
+  .lucia-lag{position:fixed;top:0;right:0;bottom:0;left:0;z-index:95;pointer-events:none;opacity:0;transition:opacity 1.2s ease;background:radial-gradient(ellipse at 50% 70%,rgba(255,150,40,.28) 0%,rgba(18,24,66,.58) 52%,rgba(5,8,30,.9) 100%)}
+  .lucia-lag::after{content:"";position:absolute;top:0;right:0;bottom:0;left:0;background:radial-gradient(ellipse at 50% 70%,rgba(255,190,90,.38),rgba(255,190,90,0) 62%);animation:lysflimmer 2.6s ease-in-out infinite}
+  @keyframes lysflimmer{0%,100%{opacity:.55}18%{opacity:.9}32%{opacity:.6}51%{opacity:1}67%{opacity:.7}83%{opacity:.95}}
+  body.lucia .lucia-lag{opacity:1}
+  .sne i{transition:background-color .9s,box-shadow .9s}
+  body.lucia .sne{z-index:96}
+  body.lucia .sne i{background:#FFD98A;box-shadow:0 0 8px 3px rgba(255,190,80,.85);opacity:1}
+  body.lucia .lyskaede{z-index:96}
+  .lysbox{transition:opacity .25s,visibility .25s,background-color 1.2s ease}
+  body.lucia .lysbox{background:rgba(10,14,40,.3)}
+
+  @media (prefers-reduced-motion:reduce){
+    .hjerter{display:none}
+    .lucia-lag::after,.lage.luciadag .flamme{animation:none}
+  }
 </style>
 </head>
 <body>
 <div id="sne" class="sne" aria-hidden="true"></div>
+<div id="luciaLag" class="lucia-lag" aria-hidden="true"></div>
+<div id="hjerter" class="hjerter" aria-hidden="true"></div>
 
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
   <symbol id="stjerne" viewBox="0 0 24 24"><polygon points="12,1 14.7,8.3 22.5,8.6 16.4,13.4 18.5,20.9 12,16.6 5.5,20.9 7.6,13.4 1.5,8.6 9.3,8.3" fill="currentColor" stroke="#1d1d1f" stroke-width="1.2" stroke-linejoin="round"/></symbol>
   <symbol id="laas" viewBox="0 0 24 24"><path d="M8 10V7.5a4 4 0 0 1 8 0V10" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><rect x="4.5" y="10" width="15" height="11" rx="2" fill="currentColor"/></symbol>
+    <symbol id="flamme" viewBox="0 0 24 30"><path d="M12 1C13 6 20 10 20 18c0 6-3.5 11-8 11s-8-5-8-11c0-5 4-7 5-12 1.5 2 2.5 1 3-5z" fill="#FFB300" stroke="#1d1d1f" stroke-width="1.2" stroke-linejoin="round"/><path d="M12 15c1.6 2.6 4 4.2 4 7.5 0 3-1.8 4.7-4 4.7s-4-1.7-4-4.7c0-3.2 3-4.6 4-7.5z" fill="#FFF3B0"/></symbol>
+  <symbol id="hjerte" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="currentColor" style="stroke:var(--hs,none);stroke-width:1.2;stroke-linejoin:round"/></symbol>
 </svg>
 
 <main class="side">
@@ -290,7 +328,7 @@
 </main>
 
 <footer id="sidefod">
-  God jul fra LEGO-julekalenderen · 24 dage · 24 byggesteps
+  🎄 God jul fra julekalenderen! 🎄
     <div class="lydlinje"><a href="#" id="lydknap">Lyd: til</a></div>
   <div class="nulstil"><a href="#" id="nulstil">Nulstil</a></div>
 </footer>
@@ -304,6 +342,7 @@
     </div>
     <div class="lb-krop" id="lbKrop">
       <div class="lb-henter" id="lbHenter">Henter billedet …</div>
+            <div class="lb-hilsen" id="lbHilsen" hidden></div>
       <img id="lbBillede" alt="">
       <div class="lb-fejl" id="lbFejl"></div>
     </div>
@@ -423,13 +462,17 @@
       var li = document.createElement('li');
       var b = document.createElement('button');
       b.type = 'button';
-      b.className = nr === ANTAL ? 'lage jul24' : 'lage';
+      b.className = nr === ANTAL ? 'lage jul24' : nr === 13 ? 'lage luciadag' : 'lage';
       b.style.setProperty('--c', FARVER[((nr - 1) * 3) % 7]);
+      var maerke = nr === 12
+        ? '<span class="hjertebadge"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#hjerte"/></svg><em>32 år</em></span>'
+        : '<svg class="mini" viewBox="0 0 24 24" aria-hidden="true"><use href="#stjerne"/></svg>';
       b.innerHTML =
         '<span class="nipler"><i></i><i></i></span>' +
         '<svg class="krone" viewBox="0 0 24 24" aria-hidden="true"><use href="#stjerne"/></svg>' +
-        '<span class="indre"><svg class="mini" viewBox="0 0 24 24" aria-hidden="true"><use href="#stjerne"/></svg><b>' + nr + '</b></span>' +
-        '<span class="front"><span class="idag-tag">' + (nr === ANTAL ? 'Juleaften' : 'I dag') + '</span><span class="nr">' + nr + '</span>' +
+        '<svg class="flamme" viewBox="0 0 24 30" aria-hidden="true"><use href="#flamme"/></svg>' +
+        '<span class="indre">' + maerke + '<b>' + nr + '</b></span>' +
+        '<span class="front"><span class="idag-tag">' + (nr === ANTAL ? 'Juleaften' : nr === 13 ? 'Luciadag' : 'I dag') + '</span><span class="nr">' + nr + '</span>' +
         '<svg class="laas" viewBox="0 0 24 24" aria-hidden="true"><use href="#laas"/></svg></span>';
       b.addEventListener('click', function () { haandterKlik(nr, b); });
       li.appendChild(b);
@@ -529,6 +572,7 @@
     });
   }
   function aabneLyd(nr) {
+    if (nr === 12) { var cb = hentAc(); if (cb) { klokkeLyd(cb); } return; }
     var c = hentAc(); if (!c) { return; }
     try {
       var t = c.currentTime + 0.02;
@@ -567,6 +611,49 @@
     if (lydTil) { aabneLyd(1); }
   });
 
+    /* ===== Særlige låger: 12. dec (forlovelsen) og 13. dec (Luciadag) ===== */
+  var HILSNER = { 12: 'Tillykke med 11.688 dags JA!' };
+  var elHilsen = document.getElementById('lbHilsen');
+  var elHjerter = document.getElementById('hjerter');
+  var luciaTimer = null;
+
+  function klokkeLyd(c) {
+    try {
+      var t = c.currentTime + 0.05;
+      [[523.25, 0], [659.25, 0.45], [783.99, 0.9], [1046.5, 1.4]].forEach(function (n) {
+        [[1, 0.12, 2.6], [2.76, 0.05, 1.6], [5.4, 0.02, 0.9]].forEach(function (d) {
+          var o = c.createOscillator(), g = c.createGain(), s = t + n[1];
+          o.type = 'sine'; o.frequency.value = n[0] * d[0];
+          g.gain.setValueAtTime(0.0001, s);
+          g.gain.exponentialRampToValueAtTime(d[1], s + 0.012);
+          g.gain.exponentialRampToValueAtTime(0.0001, s + d[2]);
+          o.connect(g); g.connect(c.destination); o.start(s); o.stop(s + d[2] + 0.05);
+        });
+      });
+    } catch (e) { /* ignorér */ }
+  }
+  function hjerteregn() {
+    if (rolig) { return; }
+    var farver = ['#E53935', '#FF5C7A', '#FF8FA3', '#D81B60'], h = '';
+    for (var i = 0; i < 26; i++) {
+      h += '<svg viewBox="0 0 24 24" aria-hidden="true" style="--x:' + (Math.random() * 94).toFixed(1) + '%;--s:' +
+        (16 + Math.round(Math.random() * 20)) + 'px;--t:' + (4 + Math.random() * 3).toFixed(1) + 's;--d:' +
+        (Math.random() * 1.8).toFixed(2) + 's;--w:' + Math.round(Math.random() * 90 - 45) + 'px;--h:' + farver[i % 4] +
+        '"><use href="#hjerte"/></svg>';
+    }
+    elHjerter.innerHTML = h;
+    setTimeout(function () { elHjerter.innerHTML = ''; }, 9500);
+  }
+  function luciaAften() {
+    document.body.classList.add('lucia');
+    clearTimeout(luciaTimer);
+    luciaTimer = setTimeout(function () { document.body.classList.remove('lucia'); }, 12000);
+  }
+  function aabnEffekt(nr) {
+    if (nr === 12) { hjerteregn(); }
+    if (nr === 13) { luciaAften(); }
+  }
+
   /* ===== Åbn låge ===== */
   function haandterKlik(nr, knap) {
     var s = tilstand(nr);
@@ -583,6 +670,7 @@
     knap.dataset.arbejder = '1';
     knap.classList.add('aabner', 'aaben');
     aabneLyd(nr);
+    aabnEffekt(nr);
     aabnede[nr] = true;
     gem();
     if (nr === ANTAL) { indlaesModel(); }
@@ -649,6 +737,8 @@
     var token = ++lbToken;
     lbModus = 'dag'; lbNr = nr;
     aabnVindue('Dag ' + nr + ' af ' + ANTAL, trigger);
+    elHilsen.textContent = HILSNER[nr] || '';
+    elHilsen.hidden = !HILSNER[nr];
     elKort.classList.toggle('jul', nr === ANTAL);
     opdaterNav();
     var filnavn = BILLEDSTI + nn(nr) + '.png';
@@ -673,6 +763,7 @@
     var token = ++lbToken;
     lbModus = 'model'; lbIdx = i;
     aabnVindue((i + 1) + ' af ' + modelUrls.length, modelAnkre[i] || trigger);
+    elHilsen.hidden = true;
     elKort.classList.add('jul');
     opdaterNav();
     elBillede.alt = 'Den færdige Fiat X1/9, billede ' + (i + 1);
